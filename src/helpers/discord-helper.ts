@@ -13,11 +13,11 @@ export default class DiscordHelper {
 
   _createWebhookData(saleInfo:any) {
     return {
-      "username": "Flutter Sales Bot",
+      "username": "0euvreAI Sales Bot",
       "embeds": [
         {
           "author": {
-            "name": "Flutter Sales Bot"
+            "name": "0euvreAI Sales Bot"
           },
           "fields": [
             {
@@ -47,7 +47,7 @@ export default class DiscordHelper {
           ],
           "color": 14303591,
           "title": `${saleInfo.nftInfo.id} → SOLD`,
-          "url": `https://explorer.solana.com/tx/${saleInfo.txSignature}`,
+          "url": `https://solscan.io/tx/${saleInfo.txSignature}`,
           "thumbnail": {
             "url": `${saleInfo.nftInfo.image}`
           },

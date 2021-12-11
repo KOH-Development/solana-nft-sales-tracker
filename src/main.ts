@@ -2,10 +2,12 @@ import { Connection, PublicKey, ConfirmedSignatureInfo } from "@solana/web3.js";
 import { getMetadata } from './helpers/metadata-helpers.js'
 import DiscordHelper from './helpers/discord-helper.js'
 import TwitterHelper from './helpers/twitter-helper.js'
+import TwitterAndDiscordHelper from "./helpers/twitter-and-discord-helper.js";
 
 import _ from 'lodash';
 import axios from 'axios'
 import fs from 'fs';
+
 
 export default class SaleTracker {
   config: any
@@ -52,17 +54,34 @@ export default class SaleTracker {
    */
   _getOutputPlugin() {
     const me = this;
-    if (me.outputType === 'console') {
-      return {
-        send: async function (saleInfo: any) {
-          console.log(JSON.stringify(saleInfo), null, 2);
+    console.log("Getting OutputType Helper");
+    switch (me.outputType) {
+      case "discord": {
+        console.log("Discord");
+        return new DiscordHelper(me.config);
+      }
+        break;
+      case "twitter": {
+        console.log("Twitter");
+        return new TwitterHelper(me.config);
+      }
+        break;
+      case "all": {
+        console.log("All");
+        return new TwitterAndDiscordHelper(me.config);
+      }
+        break;
+      case "console":
+      default: {
+        console.log("Console");
+        return {
+          send: async function (saleInfo: any) {
+            console.log(JSON.stringify(saleInfo), null, 2);
+          }
         }
       }
-    }
-    if (me.outputType === 'discord') {
-      return new DiscordHelper(me.config);
-    } else {
-      return new TwitterHelper(me.config);
+        break;
+
     }
   }
 
@@ -151,7 +170,7 @@ export default class SaleTracker {
    * @param mintMetadata 
    * @returns 
    */
-  _verifyNFT(mintMetadata:any) {
+  _verifyNFT(mintMetadata: any) {
     const me = this;
     let creators = _.map(mintMetadata.data.creators, 'address');
     let updateAuthority = _.get(mintMetadata, `updateAuthority`);

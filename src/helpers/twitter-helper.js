@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twitter-v2';
 /**
  * Twitter uses 3 legged oAuth for certain endpoints.
  * You can get the oauth key and secret by simulating the API calls yourselves.
@@ -34,25 +34,24 @@ export default class TwitterHelper {
             responseType: 'arraybuffer'
         }).then(response => Buffer.from(response.data, 'binary').toString('base64'));
     }
-    /**
-     * Format your tweet, you can use emojis.
-     * @param saleInfo
-     * @returns
-     */
-    formatTweet(saleInfo) {
-        return {
-            status: `
-  ${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
-  Marketplaces 📒 
-  → https://digitaleyes.market/collections/Flutter
-  → https://magiceden.io/marketplace?collection_symbol=flutter
-  
-  @FlutterNFT #FlutterNFT #FlutterTogether
-  
-  Explorer: https://explorer.solana.com/tx/${saleInfo.txSignature}
-    `
-        };
-    }
+  /**
+   * Format your tweet, you can use emojis.
+   * @param saleInfo 
+   * @returns 
+   */
+   formatTweet(saleInfo) {
+    return {
+        status: `
+${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
+Marketplace 📒 
+→ https://magiceden.io/marketplace/oeuvre_ai
+
+@0euvreAI #AIArt #AIGeneratedArt #NFT
+
+Explorer: https://solscan.io/tx/${saleInfo.txSignature}
+`
+    };
+}
     /**
      * Creates a formatted tweet, uploads the NFT image to twitter and then posts a status update.
      * @param saleInfo

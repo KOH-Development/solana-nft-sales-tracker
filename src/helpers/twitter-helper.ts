@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twitter-v2';
 
 /**
  * Twitter uses 3 legged oAuth for certain endpoints. 
@@ -37,18 +37,17 @@ export default class TwitterHelper {
    * @returns 
    */
   formatTweet(saleInfo:any) {
-    return {
-      status: `
-  ${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
-  Marketplaces 📒 
-  → https://digitaleyes.market/collections/Flutter
-  → https://magiceden.io/marketplace?collection_symbol=flutter
-  
-  @FlutterNFT #FlutterNFT #FlutterTogether
-  
-  Explorer: https://explorer.solana.com/tx/${saleInfo.txSignature}
-    `
-    };
+      return {
+          status: `
+${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
+Marketplace 📒 
+→ https://magiceden.io/marketplace/oeuvre_ai
+
+@0euvreAI #AIArt #AIGeneratedArt #NFT
+
+Explorer: https://solscan.io/tx/${saleInfo.txSignature}
+  `
+      };
   }
 
   /**

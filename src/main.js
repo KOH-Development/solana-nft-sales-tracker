@@ -11,6 +11,7 @@ import { Connection, PublicKey } from "@solana/web3.js";
 import { getMetadata } from './helpers/metadata-helpers.js';
 import DiscordHelper from './helpers/discord-helper.js';
 import TwitterHelper from './helpers/twitter-helper.js';
+import TwitterAndDiscordHelper from "./helpers/twitter-and-discord-helper.js";
 import _ from 'lodash';
 import axios from 'axios';
 import fs from 'fs';
@@ -30,7 +31,7 @@ export default class SaleTracker {
             let lockFile = me._readOrCreateAuditFile();
             let lastProcessedSignature = _.last(lockFile.processedSignatures);
             console.log("Started");
-            const confirmedSignatures = _.reverse(yield this.connection.getConfirmedSignaturesForAddress2(new PublicKey(me.config.primaryRoyaltiesAccount), { limit: 25, until: lastProcessedSignature }));
+            const confirmedSignatures = _.reverse(yield this.connection.getConfirmedSignaturesForAddress2(new PublicKey(me.config.primaryRoyaltiesAccount), { limit: 5, until: lastProcessedSignature }));
             _.remove(confirmedSignatures, (tx) => {
                 return _.includes(lockFile.processedSignatures, tx.signature);
             });
@@ -48,24 +49,38 @@ export default class SaleTracker {
     }
     /**
      * A basic factory to return the output plugin.
-     * @returns
+     * @returns 
      */
     _getOutputPlugin() {
         const me = this;
-        if (me.outputType === 'console') {
-            return {
-                send: function (saleInfo) {
-                    return __awaiter(this, void 0, void 0, function* () {
+        console.log("Getting OutputType Helper");
+        switch (me.outputType) {
+            case "discord": {
+                console.log("Discord");
+                return new DiscordHelper(me.config);
+            }
+                break;
+            case "twitter": {
+                console.log("Twitter");
+                return new TwitterHelper(me.config);
+            }
+                break;
+            case "all": {
+                console.log("All");
+                return new TwitterAndDiscordHelper(me.config);
+            }
+                break;
+            case "console":
+            default: {
+                console.log("Console");
+                return {
+                    send: async function (saleInfo) {
                         console.log(JSON.stringify(saleInfo), null, 2);
-                    });
+                    }
                 }
-            };
-        }
-        if (me.outputType === 'discord') {
-            return new DiscordHelper(me.config);
-        }
-        else {
-            return new TwitterHelper(me.config);
+            }
+                break;
+
         }
     }
     /**

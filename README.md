@@ -22,7 +22,7 @@ Run the following commands to clone and install dependencies:
     $ cd solana-nft-sales-tracker
     $ npm install
     $ npm run build #Might spit out some errors, but it's inconsequential.
-    $ npm run console_run (Essentially runs: node run-script-standalone.js --config='./config/sample.json' --outputType=console)
+    $ npm run console_run (Essentially runs: node run-script-standalone.js --config='./config/sample.json' --outputType=all)
 
 There are various output plugins available:
 - console: Prints the output to the console. Will work out of the box.
