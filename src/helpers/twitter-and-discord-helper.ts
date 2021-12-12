@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import axios from 'axios';
-import Twitter from 'twitter-v2';
+import Twitter from 'twitter';
+import TwitterMedia from 'twitter-media';
 
 /**
 * Just setup a new channel in discord, then go to settings, integrations and created a new webhook
@@ -14,6 +15,7 @@ import Twitter from 'twitter-v2';
 export default class TwitterAndDiscordHelper {
   config: any;
   client: any;
+  mediaClient: any;
   constructor(config: any) {
     this.config = config;
     this.client = new Twitter({
@@ -23,12 +25,18 @@ export default class TwitterAndDiscordHelper {
       access_token_key: this.config.twitter.oauth.token,
       access_token_secret: this.config.twitter.oauth.secret
     });
+    this.mediaClient = new TwitterMedia({
+      consumer_key: this.config.twitter.consumerApiKey,
+      consumer_secretecret: this.config.twitter.consumerApiSecret,
+      token: this.config.twitter.oauth.token,
+      token_secret: this.config.twitter.oauth.secret,
+  });
   }
 
   async send(saleInfo: any) {
     try {
-      this.sendDiscord(saleInfo);
       this.sendTwitter(saleInfo);
+      this.sendDiscord(saleInfo);
       console.log(JSON.stringify(saleInfo), null, 2);
     } catch (err) {
       console.log(JSON.stringify(err));
@@ -43,7 +51,7 @@ export default class TwitterAndDiscordHelper {
   getBase64(url: string) {
     return axios.get(url, {
       responseType: 'arraybuffer'
-    }).then(response => Buffer.from(response.data, 'binary').toString('base64'))
+    }).then(response => Buffer.from(response.data, 'binary'))
   }
 
   /**
@@ -71,17 +79,19 @@ Explorer: https://solscan.io/tx/${saleInfo.txSignature}
    */
   async sendTwitter(saleInfo: any) {
     const me = this;
+    //console.log(JSON.stringify(me.client));
     let tweetInfo = me.formatTweet(saleInfo);
     let image = await me.getBase64(`${saleInfo.nftInfo.image}`);
     let mediaUpload;
     try {
-      mediaUpload = await me.client.post('media/upload', { media_data: image });
+      console.log(this.mediaClient.oauth);
+      mediaUpload = await me.mediaClient.uploadMedia('image', image);
     } catch (err) {
       console.log(JSON.stringify(err));
       throw err;
     }
     try {
-      await me.client.post('/2/tweets', { status: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
+      await me.client.post('/statuses/update.json', { status: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
     } catch (err) {
       console.log(JSON.stringify(err));
       throw err;

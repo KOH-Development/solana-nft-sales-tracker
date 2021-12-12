@@ -6,10 +6,10 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc -t es6 src/**/**.ts",
-    "console_run": "node run-script-standalone.js --config='./config/sample.json' --outputType=console",
-    "console_cron": "node cron.js --config='./config/sample.json' --debugMode=true --outputType=console",
-    "all_cron": "node cron.js --config='./config/sample.json' --debugMode=true --outputType=all --trace-warnings",
-    "all_run": "node run-script-standalone.js --config='./config/sample.json' --outputType=all --trace-warnings",
+    "console_run": "node run-script-standalone.js --config='./config/prod.json' --outputType=console",
+    "console_cron": "node cron.js --config='./config/prod.json' --debugMode=true --outputType=console",
+    "all_cron": "node cron.js --config='./config/prod.json' --debugMode=true --outputType=all --trace-warnings",
+    "all_run": "node run-script-standalone.js --config='./config/prod.json' --outputType=all --trace-warnings",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -25,6 +25,8 @@
     "lodash": "^4.17.21",
     "node-cron": "^3.0.0",
     "twitter": "^1.7.1",
+    "twitter-lite": "^1.1.0",
+    "twitter-media": "^0.2.0",
     "twitter-v2": "^1.1.0",
     "typescript": "^4.4.3",
     "yargs": "^17.2.1"

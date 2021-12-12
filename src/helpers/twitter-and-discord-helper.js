@@ -8,7 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import axios from 'axios';
-import Twitter from 'twitter-v2';
+import Twitter from 'twitter';
+import TwitterMedia from 'twitter-media';
+
 /**
  * Twitter uses 3 legged oAuth for certain endpoints.
  * You can get the oauth key and secret by simulating the API calls yourselves.
@@ -24,12 +26,21 @@ export default class TwitterAndDiscordHelper {
             access_token_secret: this.config.twitter.oauth.secret,
             //bearer_token: this.config.twitter.bearerToken
         });
+        this.mediaClient = new TwitterMedia({
+            consumer_key: this.config.twitter.consumerApiKey,
+            consumer_secretecret: this.config.twitter.consumerApiSecret,
+            token: this.config.twitter.oauth.token,
+            token_secret: this.config.twitter.oauth.secret,
+        });
     }
 
     send(saleInfo) {
         try {
-            this.sendDiscord(saleInfo);
+            console.log('Twitter Sending');
             this.sendTwitter(saleInfo);
+            console.log('Discord Sending');
+            this.sendDiscord(saleInfo);
+
             console.log(JSON.stringify(saleInfo), null, 2);
         } catch (err) {
             console.log(JSON.stringify(err));
@@ -44,7 +55,7 @@ export default class TwitterAndDiscordHelper {
     getBase64(url) {
         return axios.get(url, {
             responseType: 'arraybuffer'
-        }).then(response => Buffer.from(response.data, 'binary').toString('base64'));
+        }).then(response => Buffer.from(response.data, 'binary'));
     }
     /**
      * Format your tweet, you can use emojis.
@@ -71,18 +82,22 @@ export default class TwitterAndDiscordHelper {
     sendTwitter(saleInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             const me = this;
+            //console.log(JSON.stringify(me.client));
             let tweetInfo = me.formatTweet(saleInfo);
             let image = yield me.getBase64(`${saleInfo.nftInfo.image}`);
             let mediaUpload;
+            console.log('Twitter Media Upload');
             try {
-                mediaUpload = yield me.client.post('media/upload', { media_data: image });
+                console.log(this.mediaClient.oauth);
+                mediaUpload = yield me.mediaClient.uploadMedia('image', image);
             }
             catch (err) {
                 console.log(JSON.stringify(err));
                 throw err;
             }
+            console.log('Twitter Post Tweet');
             try {
-                yield me.client.post('/2/tweets', { text: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
+                yield me.client.post('/statuses/update.json', { text: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
             } catch (err) {
                 console.log(JSON.stringify(err));
                 throw err;
