@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twit';
 import TwitterMedia from 'twitter-media';
 
 /**
@@ -22,8 +22,8 @@ export default class TwitterAndDiscordHelper {
         this.client = new Twitter({
             consumer_key: this.config.twitter.consumerApiKey,
             consumer_secret: this.config.twitter.consumerApiSecret,
-            access_token_key: this.config.twitter.oauth.token,
-            access_token_secret: this.config.twitter.oauth.secret,
+            access_token: this.config.twitter.access.token,
+            access_token_secret: this.config.twitter.access.secret,
             //bearer_token: this.config.twitter.bearerToken
         });
         this.mediaClient = new TwitterMedia({
@@ -55,7 +55,7 @@ export default class TwitterAndDiscordHelper {
     getBase64(url) {
         return axios.get(url, {
             responseType: 'arraybuffer'
-        }).then(response => Buffer.from(response.data, 'binary'));
+        }).then(response => Buffer.from(response.data, 'binary').toString('base64'));
     }
     /**
      * Format your tweet, you can use emojis.
@@ -82,22 +82,35 @@ export default class TwitterAndDiscordHelper {
     sendTwitter(saleInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             const me = this;
-            //console.log(JSON.stringify(me.client));
             let tweetInfo = me.formatTweet(saleInfo);
             let image = yield me.getBase64(`${saleInfo.nftInfo.image}`);
             let mediaUpload;
-            console.log('Twitter Media Upload');
+
             try {
-                console.log(this.mediaClient.oauth);
-                mediaUpload = yield me.mediaClient.uploadMedia('image', image);
-            }
-            catch (err) {
-                console.log(JSON.stringify(err));
-                throw err;
-            }
-            console.log('Twitter Post Tweet');
-            try {
-                yield me.client.post('/statuses/update.json', { text: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
+                mediaUpload = yield me.client.post('media/upload', { media_data: image }, function (error, media, response) {
+
+                    if (!error) {
+
+                        // If successful, a media object will be returned.
+                        console.log(media);
+
+                        // Lets tweet it
+                        var status = {
+                            status: tweetInfo.status,
+                            media_ids: media.media_id_string // Pass the media id string
+                        }
+                        console.log('Twitter Post Tweet');
+                        client.post('statuses/update', status, function (error, tweet, response) {
+                            console.log(tweet);
+                            if (error) {
+                                console.error(error);
+                            }
+                        });
+
+                    } else {
+                        throw error;
+                    }
+                });
             } catch (err) {
                 console.log(JSON.stringify(err));
                 throw err;

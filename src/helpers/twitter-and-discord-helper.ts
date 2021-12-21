@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twit';
 import TwitterMedia from 'twitter-media';
 
 /**
@@ -22,15 +22,15 @@ export default class TwitterAndDiscordHelper {
       consumer_key: this.config.twitter.consumerApiKey,
       consumer_secret: this.config.twitter.consumerApiSecret,
       //bearer_token: this.config.twitter.bearerToken,
-      access_token_key: this.config.twitter.oauth.token,
-      access_token_secret: this.config.twitter.oauth.secret
+      access_token: this.config.twitter.acess.token,
+      access_token_secret: this.config.twitter.acess.secret
     });
     this.mediaClient = new TwitterMedia({
       consumer_key: this.config.twitter.consumerApiKey,
       consumer_secretecret: this.config.twitter.consumerApiSecret,
       token: this.config.twitter.oauth.token,
       token_secret: this.config.twitter.oauth.secret,
-  });
+    });
   }
 
   async send(saleInfo: any) {
@@ -48,10 +48,10 @@ export default class TwitterAndDiscordHelper {
    * @param url 
    * @returns 
    */
-  getBase64(url: string) {
+  getBase64(url) {
     return axios.get(url, {
       responseType: 'arraybuffer'
-    }).then(response => Buffer.from(response.data, 'binary'))
+    }).then(response => Buffer.from(response.data, 'binary').toString('base64'));
   }
 
   /**
@@ -83,15 +83,31 @@ Explorer: https://solscan.io/tx/${saleInfo.txSignature}
     let tweetInfo = me.formatTweet(saleInfo);
     let image = await me.getBase64(`${saleInfo.nftInfo.image}`);
     let mediaUpload;
+
     try {
-      console.log(this.mediaClient.oauth);
-      mediaUpload = await me.mediaClient.uploadMedia('image', image);
-    } catch (err) {
-      console.log(JSON.stringify(err));
-      throw err;
-    }
-    try {
-      await me.client.post('/statuses/update.json', { status: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
+      mediaUpload = await me.client.post('media/upload', { media_data: image }, function (error: any, media: any, response: any) {
+
+        if (!error) {
+
+          // If successful, a media object will be returned.
+          console.log(media);
+
+          // Lets tweet it
+          var status = {
+            status: tweetInfo.status,
+            media_ids: media.media_id_string // Pass the media id string
+          }
+          console.log('Twitter Post Tweet');
+          me.client.post('statuses/update', status, function (error: any, tweet: any, response: any) {
+            if (error) {
+              console.error(error);
+            }
+          });
+
+        } else {
+          throw error;
+        }
+      });
     } catch (err) {
       console.log(JSON.stringify(err));
       throw err;
