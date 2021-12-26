@@ -22,8 +22,8 @@ export default class TwitterAndDiscordHelper {
       consumer_key: this.config.twitter.consumerApiKey,
       consumer_secret: this.config.twitter.consumerApiSecret,
       //bearer_token: this.config.twitter.bearerToken,
-      access_token: this.config.twitter.acess.token,
-      access_token_secret: this.config.twitter.acess.secret
+      access_token: this.config.twitter.oauth.token,
+      access_token_secret: this.config.twitter.oauth.secret
     });
     this.mediaClient = new TwitterMedia({
       consumer_key: this.config.twitter.consumerApiKey,
