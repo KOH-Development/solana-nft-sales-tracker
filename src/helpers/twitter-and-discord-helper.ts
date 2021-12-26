@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twit';
 import TwitterMedia from 'twitter-media';
 
 /**
@@ -30,7 +30,7 @@ export default class TwitterAndDiscordHelper {
       consumer_secretecret: this.config.twitter.consumerApiSecret,
       token: this.config.twitter.oauth.token,
       token_secret: this.config.twitter.oauth.secret,
-  });
+    });
   }
 
   async send(saleInfo: any) {
@@ -62,7 +62,9 @@ export default class TwitterAndDiscordHelper {
   formatTweet(saleInfo: any) {
     return {
       status: `
-${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
+${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦
+
+${saleInfo.nftInfo.image} 
 Marketplace 📒 
 → https://magiceden.io/marketplace/oeuvre_ai
 
@@ -79,23 +81,46 @@ Explorer: https://solscan.io/tx/${saleInfo.txSignature}
    */
   async sendTwitter(saleInfo: any) {
     const me = this;
-    //console.log(JSON.stringify(me.client));
+
+    // me.client
+    //   .get('account/verify_credentials', { skip_status: true })
+    //   .catch(function (err: any) {
+    //     console.log('caught error', err.stack)
+    //   })
+    //   .then(function (result: any) {
+    //     // `result` is an Object with keys "data" and "resp".
+    //     // `data` and `resp` are the same objects as the ones passed
+    //     // to the callback.
+    //     // See https://github.com/ttezel/twit#tgetpath-params-callback
+    //     // for details.
+
+    //     console.log('data', result.data);
+    //   })
+
     let tweetInfo = me.formatTweet(saleInfo);
-    let image = await me.getBase64(`${saleInfo.nftInfo.image}`);
-    let mediaUpload;
-    try {
-      console.log(this.mediaClient.oauth);
-      mediaUpload = await me.mediaClient.uploadMedia('image', image);
-    } catch (err) {
-      console.log(JSON.stringify(err));
-      throw err;
-    }
-    try {
-      await me.client.post('/statuses/update.json', { status: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
-    } catch (err) {
-      console.log(JSON.stringify(err));
-      throw err;
-    }
+    let image = me.getBase64(`${saleInfo.nftInfo.image}`);
+
+    // first we must post the media to Twitter
+    me.client.post('media/upload', { media_data: image }, function (err: any, data: { media_id_string: any; }, response: any) {
+      // now we can assign alt text to the media, for use by screen readers and
+      // other text-based presentations and interpreters
+      var mediaIdStr = data.media_id_string;
+      var altText = saleInfo.nftInfo.id;
+      var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
+
+      me.client.post('media/metadata/create', meta_params, function (err: any, data: any, response: any) {
+        if (!err) {
+          // now we can reference the media and post a tweet (media will attach to the tweet)
+          var params = { status: saleInfo, media_ids: [mediaIdStr] }
+
+          me.client.post('statuses/update', params, function (err: any, data: any, response: any) {
+            console.log(data)
+          });
+        } else {
+          console.log(err);
+        }
+      });
+    });
   }
 
   _createWebhookData(saleInfo: any) {

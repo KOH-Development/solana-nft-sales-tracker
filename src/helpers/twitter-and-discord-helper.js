@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import axios from 'axios';
-import Twitter from 'twitter';
+import Twitter from 'twit';
 import TwitterMedia from 'twitter-media';
 
 /**
@@ -22,7 +22,7 @@ export default class TwitterAndDiscordHelper {
         this.client = new Twitter({
             consumer_key: this.config.twitter.consumerApiKey,
             consumer_secret: this.config.twitter.consumerApiSecret,
-            access_token_key: this.config.twitter.oauth.token,
+            access_token: this.config.twitter.oauth.token,
             access_token_secret: this.config.twitter.oauth.secret,
             //bearer_token: this.config.twitter.bearerToken
         });
@@ -38,8 +38,8 @@ export default class TwitterAndDiscordHelper {
         try {
             console.log('Twitter Sending');
             this.sendTwitter(saleInfo);
-            console.log('Discord Sending');
-            this.sendDiscord(saleInfo);
+            //console.log('Discord Sending');
+            //this.sendDiscord(saleInfo);
 
             console.log(JSON.stringify(saleInfo), null, 2);
         } catch (err) {
@@ -65,7 +65,9 @@ export default class TwitterAndDiscordHelper {
     formatTweet(saleInfo) {
         return {
             status: `
-      ${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦 
+      ${saleInfo.nftInfo.id} purchased for ${saleInfo.saleAmount} S◎L 🐦
+
+      ${saleInfo.nftInfo.image} 
       Marketplace 📒 
       → https://magiceden.io/marketplace/oeuvre_ai
       
@@ -82,26 +84,50 @@ export default class TwitterAndDiscordHelper {
     sendTwitter(saleInfo) {
         return __awaiter(this, void 0, void 0, function* () {
             const me = this;
-            //console.log(JSON.stringify(me.client));
+
+            me.client
+                .get('account/verify_credentials', { skip_status: true })
+                .catch(function (err) {
+                    console.log('caught error', err.stack);
+                })
+                .then(function (result) {
+                    // `result` is an Object with keys "data" and "resp".
+                    // `data` and `resp` are the same objects as the ones passed
+                    // to the callback.
+                    // See https://github.com/ttezel/twit#tgetpath-params-callback
+                    // for details.
+
+                    console.log('data', result.data);
+                });
+
             let tweetInfo = me.formatTweet(saleInfo);
-            let image = yield me.getBase64(`${saleInfo.nftInfo.image}`);
-            let mediaUpload;
-            console.log('Twitter Media Upload');
-            try {
-                console.log(this.mediaClient.oauth);
-                mediaUpload = yield me.mediaClient.uploadMedia('image', image);
-            }
-            catch (err) {
-                console.log(JSON.stringify(err));
-                throw err;
-            }
-            console.log('Twitter Post Tweet');
-            try {
-                yield me.client.post('/statuses/update.json', { text: tweetInfo.status, media: { media_ids: mediaUpload.media_id_string } });
-            } catch (err) {
-                console.log(JSON.stringify(err));
-                throw err;
-            }
+            let image = me.getBase64(`${saleInfo.nftInfo.image}`);
+
+            // first we must post the media to Twitter
+            me.client.post('media/upload', { media_data: image }, function (err, data, response) {
+                // now we can assign alt text to the media, for use by screen readers and
+                // other text-based presentations and interpreters
+                console.log('image uploaded');
+
+                var mediaIdStr = data.media_id_string;
+                var altText = saleInfo.nftInfo.id;
+                var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
+
+                me.client.post('media/metadata/create', meta_params, function (err, data, response) {
+                    if (!err) {
+                        console.log('image metadata uploaded');
+
+                        // now we can reference the media and post a tweet (media will attach to the tweet)
+                        var params = { status: saleInfo, media_ids: [mediaIdStr] }
+
+                        me.client.post('statuses/update', params, function (err, data, response) {
+                            console.log(data);
+                        });
+                    } else {
+                        console.log(err);
+                    }
+                });
+            });
         });
     }
 
