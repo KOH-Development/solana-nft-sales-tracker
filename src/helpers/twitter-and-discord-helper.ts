@@ -22,8 +22,8 @@ export default class TwitterAndDiscordHelper {
       consumer_key: this.config.twitter.consumerApiKey,
       consumer_secret: this.config.twitter.consumerApiSecret,
       //bearer_token: this.config.twitter.bearerToken,
-      access_token_key: this.config.twitter.oauth.token,
-      access_token_secret: this.config.twitter.oauth.secret
+      access_token: this.config.twitter.acess.token,
+      access_token_secret: this.config.twitter.acess.secret
     });
     this.mediaClient = new TwitterMedia({
       consumer_key: this.config.twitter.consumerApiKey,
@@ -48,10 +48,10 @@ export default class TwitterAndDiscordHelper {
    * @param url 
    * @returns 
    */
-  getBase64(url: string) {
+  getBase64(url: any) {
     return axios.get(url, {
       responseType: 'arraybuffer'
-    }).then(response => Buffer.from(response.data, 'binary'))
+    }).then(response => Buffer.from(response.data, 'binary').toString('base64'));
   }
 
   /**
